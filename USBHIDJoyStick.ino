@@ -1,7 +1,5 @@
 // #include <usbhid.h>
 
-// Daniel is really cool
-
 #include <hiduniversal.h>
 #include <usbhub.h>
 #include "hidjoystickrptparser.h"
@@ -11,11 +9,10 @@ USBHub Hub(&Usb);
 HIDUniversal Hid(&Usb);
 JoystickEvents JoyEvents;
 JoystickReportParser Joy(&JoyEvents);
-const int inputPin4 = 4;
-const int inputPin5 = 5;
-const int inputPin6 = 6;
-int EN1 = 5;
-int EN2 = 6;
+const int inputPin4 = 4; //The RSL (Robot Signal Light)
+const int inputPin5 = 5; //Left motor pin
+const int inputPin9 = 9; //Right motor pin
+const float gain = 1; //Changable gain to lower speed of robot
 
 void setup() {
     Serial.begin(115200);
@@ -32,11 +29,9 @@ void setup() {
     if (!Hid.SetReportParser(0, &Joy))
         ErrorMessage<uint8_t>(PSTR("SetReportParser"), 1);
 
-    pinMode(EN1, OUTPUT);   // where the motor is connected to
-    pinMode(EN2, OUTPUT);   // where the motor is connected to
     pinMode(inputPin4, OUTPUT);
     pinMode(inputPin5, OUTPUT);
-    pinMode(inputPin6, OUTPUT);
+    pinMode(inputPin9, OUTPUT);
 }
 
 void loop() {
@@ -44,53 +39,56 @@ void loop() {
     Usb.Task();
 
     if (JoystickEvents::mostRecentEvent.Z2 == 1) {
+        
         delay(200);
         digitalWrite(inputPin4, HIGH);
         delay(200);
         digitalWrite(inputPin4, LOW);
       
-        Serial.print("X: ");
-        Serial.println(JoystickEvents::mostRecentEvent.X);
-        Serial.print("Y: ");
-        Serial.println(JoystickEvents::mostRecentEvent.Y);
 
-        int joyX = analogRead(JoystickEvents::mostRecentEvent.X);  // Read X-axis from joystick (between 0 and 1023)
-        int joyY = analogRead(JoystickEvents::mostRecentEvent.Y);  // Read Y-axis from joystick (between 0 and 1023)
+        int joyX = JoystickEvents::mostRecentEvent.X;
+        int joyY = JoystickEvents::mostRecentEvent.Y;
 
-        // Convert joystick to motor speeds (0 to 255)
-        int speedLeft = map(joyY, 0, 1023, -255, 255);  // Map Y-axis to motor speed
-        int speedRight = map(joyY, 0, 1023, -255, 255); // Map Y-axis to motor speed
+        int x = joyX - 128;
+        int y = joyY - 128; 
 
-        int speedDiff = map(joyX, 0, 1023, -255, 255);   // Map X-axis to speed difference
-
-        speedLeft += speedDiff;
-        speedRight -= speedDiff;
+        float speedLeft = -((y+x) * gain);
+        float speedRight = -((y-x) * gain);
 
         // Limit speeds
         speedLeft = constrain(speedLeft, -255, 255);
         speedRight = constrain(speedRight, -255, 255);
 
         // Set motor speeds and directions
-        analogWrite(EN1, abs(speedLeft));  // Set speed for Motor 1
-        analogWrite(EN2, abs(speedRight)); // Set speed for Motor 2
 
-        // if (speedLeft >= 0) {
-        //     digitalWrite(inputPin1, HIGH);
-        //     digitalWrite(inputPin2, LOW);
-        // } else {
-        //     digitalWrite(inputPin1, LOW);
-        //     digitalWrite(inputPin2, HIGH);
-        // }
+        int leftSpeed = speedLeft;
+        int rightSpeed = speedRight;
 
-        // if (speedRight >= 0) {
-        //     digitalWrite(inputPin3, HIGH);
-        //     digitalWrite(inputPin4, LOW);
-        // } else {
-        //     digitalWrite(inputPin3, LOW);
-        //     digitalWrite(inputPin4, HIGH);
-        // }
+        // Serial.println(x); 
+        // Serial.println(y);
 
+      // Left motor control
+
+      if (leftSpeed >= 0) {
+         analogWrite(inputPin9, leftSpeed);   // Left Forward
+         Serial.println("Left Forward");
+      } else {
+         analogWrite(inputPin9, -(abs(leftSpeed)));  // Left Reverse
+         Serial.println("Left Reverse");
+      }
+
+      // Right motor control
+      if (rightSpeed >= 0) {
+         analogWrite(inputPin5, rightSpeed);   // Right Forward
+         Serial.println("Right Forward");
+      } else {
+         analogWrite(inputPin5, -(abs(rightSpeed)));  // Right Reverse
+         Serial.println("Right Reverse");
+      }
+      
     } else {
-        digitalWrite(inputPin4, LOW);
+        analogWrite(inputPin4, LOW);
+        analogWrite(inputPin5, 0);
+        analogWrite(inputPin9, 0);
     }
 }
