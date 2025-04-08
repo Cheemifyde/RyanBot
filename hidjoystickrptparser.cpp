@@ -5,7 +5,7 @@ joyEvents(evt),
 oldHat(0xDE),
 oldButtons(0) {
         for (uint8_t i = 0; i < RPT_GEMEPAD_LEN; i++)
-                oldPad[i] = 0xD;
+                oldPad[i] = 0xD;`
 }
 
 void JoystickReportParser::Parse(USBHID *hid, bool is_rpt_id, uint8_t len, uint8_t *buf) {
@@ -57,12 +57,12 @@ void JoystickReportParser::Parse(USBHID *hid, bool is_rpt_id, uint8_t len, uint8
 GamePadEventData JoystickEvents::mostRecentEvent;
 void JoystickEvents::OnGamePadChanged(const GamePadEventData *evt) {
         mostRecentEvent = *evt; 
-        Serial.print("X: ");
-        Serial.println(JoystickEvents::mostRecentEvent.X);
-        Serial.print("Y: ");
-        Serial.println(JoystickEvents::mostRecentEvent.Y);
-        Serial.print("Boolean: ");
-        Serial.println(JoystickEvents::mostRecentEvent.Z2);
+        // Serial.print("X: ");
+        // Serial.println(JoystickEvents::mostRecentEvent.X);
+        // Serial.print("Y: ");
+        // Serial.println(JoystickEvents::mostRecentEvent.Y);
+        // Serial.print("Boolean: ");
+        // Serial.println(JoystickEvents::mostRecentEvent.Z2);
 }
 
 void JoystickEvents::OnHatSwitch(uint8_t hat) {
